@@ -5,8 +5,11 @@ Created on Tue May  2 02:23:37 2017
 @author: Houssam
 """
 
+import os
 import sys
+import json
 import matplotlib.pyplot as plt
+
 
 from PyQt5 import uic
 from matplotlib.figure import Figure
@@ -214,7 +217,7 @@ class Visualisation(QWidget):
         mode = self.visualisation_mode
         data = self.data
 
-        list_exercice = os.listdir('Data/Features')
+        list_exercice = os.listdir('Features')
         index = ""
         for i in range(len(data)):
             (X,Y) = data[i]
@@ -223,74 +226,34 @@ class Visualisation(QWidget):
                     if Y[j] == y:
                         for k in range(len(list_exercice)):
                             exercice = list_exercice[k]
-                            if exercice.startswith(diseases_selected[i]):
+                            if exercice.startswith(self.diseases_selected[i]):
                                 index = list_exercice[k+j]
                                 break
 
 
 
-        label = index[:-4]+"label.json"
+        label = index[:-9]+"label.js"
 
         ### A voir ####
 
-        dict_fiche = json.load(open("Data/Labels/" + label))
+        dict_fiche = json.load(open("Labels/" + label))
 
-        affiche = "Date de naissance:" + " " + str(dict_fiche["birthDate"][:2]) + "/" + str(dict_fiche["birthDate"][2:4]) + "/" + str(dict_fiche["birthDate"][4:]) + "\n"
-        affiche += "Date de consultation :" + " " + str(dict_fiche["consultationDate"][:2]) + "/" + str(dict_fiche["consultationDate"][2:4]) + "/" + str(dict_fiche["consultationDate"][4:]) + "\n"
-        if str(dict_fiche["gender"]) == "male":
-            affiche += "Genre :" + " Homme" + "\n"
+        affiche = "Date de naissance:" + " " + str(dict_fiche["Date de naissance"][:2]) + "/" + str(dict_fiche["Date de naissance"][2:4]) + "/" + str(dict_fiche["Date de naissance"][4:]) + "\n"
+        affiche += "Date de la mesure:" + " " + str(dict_fiche["Date de la mesure"][:2]) + "/" + str(dict_fiche["Date de la mesure"][2:4]) + "/" + str(dict_fiche["Date de la mesure"][4:]) + "\n"
+        if str(dict_fiche["Sexe"]) == "Homme":
+            affiche += "Sexe:" + " Homme" + "\n"
         else:
-            affiche += "Genre :" + " Femme" + "\n"
-        affiche += "Taille :" + " " + str(dict_fiche["height"]) + " cm" + "\n"
-        affiche += "Poids :" + " " + str(dict_fiche["weight"]) + " kg" + "\n"
+            affiche += "Sexe :" + " Femme" + "\n"
+        affiche += "Taille :" + " " + str(dict_fiche["Taille"]) + " cm" + "\n"
+        affiche += "Poids :" + " " + str(dict_fiche["Poids"]) + " kg" + "\n"
 
         try:
-            affiche += "Plainte :" + " "
-            for item in dict_fiche["complaint"]:
+            affiche += "Atteinte :" + " "
+            for item in dict_fiche["Atteinte"]:
                 affiche += str(item) + " - "
             affiche = affiche[:-2] + "\n"
         except KeyError:
             affiche += " - " + "\n"
-
-        try:
-            affiche += "Maladie :" + " "
-            for item in dict_fiche["disease"]:
-                affiche += str(item) + " - "
-            affiche = affiche[:-2] + "\n"
-        except KeyError:
-            affiche += " - " + "\n"
-
-        try:
-            affiche += "Etiologie :" + " "
-            for item in dict_fiche["etiology"]:
-                affiche += str(item) + " - "
-            affiche = affiche[:-2] + "\n"
-        except KeyError:
-            affiche += " - " + "\n"
-
-        try:
-            affiche += "Etat :" + " "
-            for item in dict_fiche["state"]:
-                affiche += str(item) + " - "
-            affiche = affiche[:-2] + "\n"
-        except KeyError:
-            affiche += " - " + "\n"
-
-        try:
-            affiche += "Latéralisation :" + " "
-            for item in dict_fiche["lateralization"]:
-                affiche += str(item) + " - "
-            affiche = affiche[:-2] + "\n"
-        except KeyError:
-            affiche += " - " + "\n"
-
-        try:
-            affiche += "Anatomie :" + " "
-            for item in dict_fiche["anatomy"]:
-                affiche += str(item) + " - "
-            affiche = affiche[:-2]
-        except KeyError:
-            affiche += " - "
 
         self.text_point.append(affiche)
 
