@@ -19,6 +19,12 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import \
     NavigationToolbar2QT as NavigationToolbar
 
+from sklearn import metrics
+from sklearn.cluster import KMeans
+from sklearn.datasets import load_digits
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import scale
+
 
 from datapreparing import DataPreparing
  
@@ -45,6 +51,7 @@ class Visualisation(QWidget):
         self.diseases_selected = ['','','','']
         self.visualisation_mode = ''
         self.total_data = []
+        self.X_a = []
         self.initUI()
 
  
@@ -184,7 +191,7 @@ class Visualisation(QWidget):
         tab_std,c = DataPreparing.prepare(process)
         X_a = DataPreparing.X_plot_method(process,tab_std,mode)
         X1,Y1,X2,Y2,X3,Y3,X4,Y4 = DataPreparing.data_plot_preparation(process,X_a,c)
-
+        self.X_a = X_a
         #ax = self.figure.add_subplot(111) # Adds the plot to the place you tell when using move (voir plus haut).
         self.total_data = [(X1,Y1),(X2,Y2),(X3,Y3),(X4,Y4)]
 
@@ -268,25 +275,45 @@ class Visualisation(QWidget):
         self.text_point.append(affiche)
 
     def clustering(self):
-        
-        [(X1,Y1),(X2,Y2),(X3,Y3),(X4,Y4)] = self.total_data
-        X = X1 + X2 + X3 + X4
-        Y = Y1 + Y2 + Y3 + Y4
-        clustering_data = np.array([X,Y])
+
+        reduced_data = self.X_a
+        kmeans = KMeans(init='k-means++', n_clusters=8, n_init=10)
+        kmeans.fit(reduced_data)
+
+        # Step size of the mesh. Decrease to increase the quality of the VQ.
+        h = .02     # point in the mesh [x_min, x_max]x[y_min, y_max].
+
+        # Plot the decision boundary. For that, we will assign a color to each
+        x_min, x_max = reduced_data[:, 0].min() - 1, reduced_data[:, 0].max() + 1
+        y_min, y_max = reduced_data[:, 1].min() - 1, reduced_data[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+
+        # Obtain labels for each point in mesh. Use last trained model.
+        Z = kmeans.predict(np.c_[xx.ravel(), yy.ravel()])
+
+        # Put the result into a color plot
+        Z = Z.reshape(xx.shape)
 
         self.fig.clf()
-        self.subplot = self.fig.add_subplot(111)
+        self.fig.imshow(Z, interpolation='nearest',
+           extent=(xx.min(), xx.max(), yy.min(), yy.max()),
+           cmap=plt.cm.Paired,
+           aspect='auto', origin='lower')
 
-        clustering = KMeans(n_clusters=2)
-        clustering.fit(clustering_data)
-        labels = clustering.labels_
-   
-        self.subplot.plot(X, Y, "ro", c=labels.astype(np.float), picker=3.0)
-
-        self.subplot.legend()
-        self.matplotlibWidget.draw()
+        self.fig.plot(reduced_data[:, 0], reduced_data[:, 1], 'k.', markersize=2)
+        # Plot the centroids as a white X
+        centroids = kmeans.cluster_centers_
+        self.fig.scatter(centroids[:, 0], centroids[:, 1],
+            marker='x', s=169, linewidths=3,
+            color='w', zorder=10)
+        self.fig.title('K-means clustering on the digits dataset (PCA-reduced data)\n'
+          'Centroids are marked with white cross')
+        self.fig.xlim(x_min, x_max)
+        self.fig.ylim(y_min, y_max)
+        self.fig.xticks(())
+        self.fig.yticks(())
         self.show()
-
+        
     def graph_reset(self):
 
         self.fig.clf()
